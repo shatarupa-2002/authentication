@@ -1,4 +1,4 @@
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 
@@ -8,9 +8,6 @@ export default function Input({ formData, setFormData, errors, setErrors }) {
   const handleChange = (field, value) => {
     if (field === "dob") {
       value = formatDOB(value);
-      if (value.length === 10 && !isValidDOB(value)) {
-        Alert.alert("Invalid DOB", "You must be at least 18 years old.");
-      }
     }
     setFormData((prev) => ({ ...prev, [field]: value }));
     validateField(field, value);
@@ -24,18 +21,6 @@ export default function Input({ formData, setFormData, errors, setErrors }) {
       value = value.slice(0, 2) + "/" + value.slice(2, 4) + "/" + value.slice(4, 8);
     }
     return value;
-  };
-
-  const isValidDOB = (dob) => {
-    const [month, day, year] = dob.split("/").map(Number);
-    const birthDate = new Date(year, month - 1, day);
-    const today = new Date();
-    const age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      return age - 1 >= 18;
-    }
-    return age >= 18;
   };
 
   const validateField = (field, value) => {
@@ -58,8 +43,21 @@ export default function Input({ formData, setFormData, errors, setErrors }) {
         if (value.length < 5) message = "Address too short.";
         break;
       case "dob":
-        if (!/^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/.test(value))
+        if (!/^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/.test(value)) {
           message = "DOB must be in MM/DD/YYYY format.";
+        } else {
+          const [month, day, year] = value.split("/").map(Number);
+          const birthDate = new Date(year, month - 1, day);
+          const today = new Date();
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const m = today.getMonth() - birthDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          if (age < 18) {
+            message = "You must be at least 18 years old.";
+          }
+        }
         break;
       default:
         break;
